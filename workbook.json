@@ -1,0 +1,684 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "##  DevOps Security\r\n\r\n"
+      },
+      "customWidth": "50",
+      "name": "text - 1"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "c88e6e5a-d64e-4065-98a0-63772188ff5e",
+            "version": "KqlParameterItem/1.0",
+            "name": "Help",
+            "label": "Show Help",
+            "type": 10,
+            "description": "Show insturctions for using this workbook",
+            "isRequired": true,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[\r\n { \"value\": \"Yes\", \"label\": \"Yes\"},\r\n {\"value\": \"No\", \"label\": \"No\", \"selected\":true }\r\n]",
+            "timeContext": {
+              "durationMs": 86400000
+            }
+          }
+        ],
+        "style": "above",
+        "queryType": 12
+      },
+      "name": "HelpParameter"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "#### Navigate\r\nClick on one of the tabs below to explore each area:\r\n* Overview - Summary view of code and secrets scan results\r\n* Secrets - View of exposed secrets in repositories\r\n* Branches - View of expired git branches\r\n",
+        "style": "info"
+      },
+      "conditionalVisibility": {
+        "parameterName": "Help",
+        "comparison": "isEqualTo",
+        "value": "Yes"
+      },
+      "name": "NavInstructions"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "crossComponentResources": [
+          "value::all"
+        ],
+        "parameters": [
+          {
+            "id": "4304b4ec-3637-4cad-abff-64452c9ab4f4",
+            "version": "KqlParameterItem/1.0",
+            "name": "applicationInsights",
+            "label": "Application Insights",
+            "type": 5,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "resources\n| where type == \"microsoft.insights/components\"\n| distinct id",
+            "crossComponentResources": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "showDefault": false
+            },
+            "defaultValue": "value::all",
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "a0fa776d-16fa-4a02-a8cb-8f539387a725",
+            "version": "KqlParameterItem/1.0",
+            "name": "timeRange",
+            "label": "Time Range ",
+            "type": 4,
+            "isRequired": true,
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "value": {
+              "durationMs": 604800000
+            }
+          },
+          {
+            "id": "baff543e-ac3b-4e23-b98c-e97d041cd38b",
+            "version": "KqlParameterItem/1.0",
+            "name": "trendBinSize",
+            "label": "Trend Bin Size",
+            "type": 2,
+            "isRequired": true,
+            "query": "{\"version\":\"1.0.0\",\"content\":\"[\\n\\t{\\n    \\\"trendBinSize\\\":\\\"5m\\\"\\n  },\\n\\t{\\n    \\\"trendBinSize\\\":\\\"15m\\\"\\n  },\\n  {\\n    \\\"trendBinSize\\\":\\\"1h\\\"\\n  },\\n  {\\n    \\\"trendBinSize\\\":\\\"1d\\\"\\n  },\\n  {\\n    \\\"trendBinSize\\\":\\\"7d\\\"\\n  },\\n  {\\n    \\\"trendBinSize\\\":\\\"14d\\\"\\n  },\\n  {\\n    \\\"trendBinSize\\\":\\\"1m\\\"\\n  }\\n]\\n\",\"transformers\":null}",
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "queryType": 8,
+            "value": "1h"
+          },
+          {
+            "id": "b798a2e6-ae73-47cf-9b76-4780901576d6",
+            "version": "KqlParameterItem/1.0",
+            "name": "repo",
+            "label": "Repository",
+            "type": 5,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "let startDateTime = {timeRange:start};\nlet endDateTime = {timeRange:end};\nlet trendBinSize = {trendBinSize};\ncustomEvents\n| where timestamp between(startDateTime .. endDateTime)\n| where name == \"telemetry_azure_devops_secrets_counter\"\n| extend    repo_name = tostring(customDimensions.['repo_name']),\n            git_branch = tostring(customDimensions.['git_branch'])\n| distinct Id=repo_name\n",
+            "crossComponentResources": [
+              "{applicationInsights}"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "showDefault": false
+            },
+            "defaultValue": "value::all",
+            "queryType": 0,
+            "resourceType": "microsoft.insights/components"
+          },
+          {
+            "id": "8db958c0-9195-414e-aef5-95e81b7c08d7",
+            "version": "KqlParameterItem/1.0",
+            "name": "latestOperationIdForSecretsScan",
+            "label": "Latest Secret Scan Operation Id ",
+            "type": 5,
+            "isRequired": true,
+            "query": "let startDateTime = {timeRange:start};\nlet endDateTime = {timeRange:end};\nlet trendBinSize = {trendBinSize};\ncustomEvents\n| where timestamp between(startDateTime .. endDateTime)\n| where name == \"telemetry_azure_devops_secrets_counter\"\n| extend    operation_id = tostring(customDimensions.['operation_id']),\n            ref_name = tostring(customDimensions.['ref_name'])\n| project timestamp, operation_id\n| top 1 by timestamp desc\n| project Id=operation_id",
+            "crossComponentResources": [
+              "{applicationInsights}"
+            ],
+            "isHiddenWhenLocked": true,
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::1"
+              ],
+              "showDefault": false
+            },
+            "defaultValue": "value::1",
+            "queryType": 0,
+            "resourceType": "microsoft.insights/components"
+          }
+        ],
+        "style": "pills",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources"
+      },
+      "name": "Branches parameters"
+    },
+    {
+      "type": 11,
+      "content": {
+        "version": "LinkItem/1.0",
+        "style": "tabs",
+        "links": [
+          {
+            "id": "28d59a80-f8b1-4a7f-a53e-0342585e1468",
+            "cellValue": "SelectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Overview",
+            "subTarget": "OverviewTab",
+            "style": "link"
+          },
+          {
+            "id": "e9b65feb-9f81-4b66-80df-c9d409a4a404",
+            "cellValue": "SelectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Secrets",
+            "subTarget": "SecretsTab",
+            "style": "link"
+          }
+        ]
+      },
+      "name": "Tabs"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let startDateTime = {timeRange:start};\nlet endDateTime = {timeRange:end};\nlet trendBinSize = {trendBinSize};\ncustomEvents\n| where timestamp between(startDateTime .. endDateTime)\n| where name == \"telemetry_azure_devops_secrets_counter\"\n| extend\n    operation_id = tostring(customDimensions.['operation_id']),\n    organization_uri = tostring(customDimensions.['organization_uri']),\n    project_name = tostring(customDimensions.['project_name']),\n    repo_name = tostring(customDimensions.['repo_name']),\n    repo_url = tostring(customDimensions.['repo_url']),\n    git_branch = tostring(customDimensions.['git_branch']),\n    description = tostring(customDimensions.['description']),\n    start_line = tostring(customDimensions.['start_line']),\n    file_path = tostring(customDimensions.['file_path']),\n    rule_id = tostring(customDimensions.['rule_id']),\n    ref_commit_id = tostring(customDimensions.['ref_commit_id']),\n    latest_ref_committer_date = todatetime(customDimensions.['latest_ref_committer_date']),\n    latest_ref_committer_name = tostring(customDimensions.['latest_ref_committer_name']),\n    latest_ref_committer_email = tostring(customDimensions.['latest_ref_committer_email'])\n| where operation_id == \"{latestOperationIdForSecretsScan}\"\n| where repo_name in ({repo})\n| project repo_name, branch=git_branch, latest_ref_committer_date, latest_ref_committer_name, latest_ref_committer_email, repo_url, operation_id, [\"Application Insights\"]=appName, project_name, timestamp, description\n| summarize [\"Secret count\"]=count() by description\n| sort by [\"Secret count\"] desc\n| render piechart",
+        "size": 4,
+        "title": "Exposed secrets",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": [
+          "{applicationInsights}"
+        ],
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Severity",
+            "formatter": 4,
+            "formatOptions": {
+              "palette": "redBright"
+            },
+            "numberFormat": {
+              "unit": 0,
+              "options": {
+                "style": "decimal"
+              }
+            }
+          },
+          "leftContent": {
+            "columnMatch": "Count",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "redGreen"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 2,
+                "maximumSignificantDigits": 3
+              }
+            }
+          },
+          "showBorder": true,
+          "sortCriteriaField": "Severity"
+        },
+        "chartSettings": {
+          "seriesLabelSettings": [
+            {
+              "seriesName": "High",
+              "color": "redBright"
+            },
+            {
+              "seriesName": "Medium",
+              "color": "yellow"
+            },
+            {
+              "seriesName": "Unknown",
+              "color": "blueDark"
+            }
+          ]
+        }
+      },
+      "conditionalVisibility": {
+        "parameterName": "SelectedTab",
+        "comparison": "isEqualTo",
+        "value": "OverviewTab"
+      },
+      "customWidth": "50",
+      "name": "SecretsExposed"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---"
+      },
+      "name": "text - 11"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## Secret discoveries are made through [Gitleaks](https://github.com/gitleaks/gitleaks)."
+            },
+            "name": "text - 6"
+          },
+          {
+            "type": 9,
+            "content": {
+              "version": "KqlParameterItem/1.0",
+              "crossComponentResources": [
+                "{applicationInsights}"
+              ],
+              "parameters": [
+                {
+                  "id": "b8ef96a5-1621-4a41-8a2f-f27ca71cf4c3",
+                  "version": "KqlParameterItem/1.0",
+                  "name": "secretDescription",
+                  "label": "Secret description",
+                  "type": 2,
+                  "isRequired": true,
+                  "multiSelect": true,
+                  "quote": "'",
+                  "delimiter": ",",
+                  "query": "let startDateTime = {timeRange:start};\nlet endDateTime = {timeRange:end};\nlet trendBinSize = {trendBinSize};\ncustomEvents\n| where timestamp between(startDateTime .. endDateTime)\n| where name == \"telemetry_azure_devops_secrets_counter\"\n| extend\n    operation_id = tostring(customDimensions.['operation_id']),\n    organization_uri = tostring(customDimensions.['organization_uri']),\n    project_name = tostring(customDimensions.['project_name']),\n    repo_name = tostring(customDimensions.['repo_name']),\n    repo_url = tostring(customDimensions.['repo_url']),\n    git_branch = tostring(customDimensions.['git_branch']),\n    description = tostring(customDimensions.['description']),\n    start_line = tostring(customDimensions.['start_line']),\n    file_path = tostring(customDimensions.['file_path']),\n    rule_id = tostring(customDimensions.['rule_id']),\n    ref_commit_id = tostring(customDimensions.['ref_commit_id']),\n    latest_ref_committer_date = todatetime(customDimensions.['latest_ref_committer_date']),\n    latest_ref_committer_name = tostring(customDimensions.['latest_ref_committer_name']),\n    latest_ref_committer_email = tostring(customDimensions.['latest_ref_committer_email'])\n| where operation_id == \"{latestOperationIdForSecretsScan}\"\n| where repo_name in ({repo})\n| distinct id=description\n",
+                  "crossComponentResources": [
+                    "{applicationInsights}"
+                  ],
+                  "typeSettings": {
+                    "additionalResourceOptions": [
+                      "value::all"
+                    ]
+                  },
+                  "timeContext": {
+                    "durationMs": 0
+                  },
+                  "timeContextFromParameter": "timeRange",
+                  "defaultValue": "value::all",
+                  "queryType": 0,
+                  "resourceType": "microsoft.insights/components",
+                  "value": [
+                    "value::all"
+                  ]
+                }
+              ],
+              "style": "pills",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components"
+            },
+            "name": "parameters - 6"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let startDateTime = {timeRange:start};\nlet endDateTime = {timeRange:end};\nlet trendBinSize = {trendBinSize};\ncustomEvents\n| where timestamp between(startDateTime .. endDateTime)\n| where name == \"telemetry_azure_devops_secrets_counter\"\n| extend\n    operation_id = tostring(customDimensions.['operation_id']),\n    organization_uri = tostring(customDimensions.['organization_uri']),\n    project_name = tostring(customDimensions.['project_name']),\n    repo_name = tostring(customDimensions.['repo_name']),\n    repo_url = tostring(customDimensions.['repo_url']),\n    git_branch = tostring(customDimensions.['git_branch']),\n    description = tostring(customDimensions.['description']),\n    start_line = tostring(customDimensions.['start_line']),\n    file_path = tostring(customDimensions.['file_path']),\n    rule_id = tostring(customDimensions.['rule_id']),\n    ref_commit_id = tostring(customDimensions.['ref_commit_id']),\n    latest_ref_committer_date = todatetime(customDimensions.['latest_ref_committer_date']),\n    latest_ref_committer_name = tostring(customDimensions.['latest_ref_committer_name']),\n    latest_ref_committer_email = tostring(customDimensions.['latest_ref_committer_email'])\n| where operation_id == \"{latestOperationIdForSecretsScan}\"\n| where repo_name in ({repo})\n| where description in ({secretDescription})\n| project repo_name, branch=git_branch, latest_ref_committer_date, latest_ref_committer_name, latest_ref_committer_email, repo_url, operation_id, [\"Application Insights\"]=appName, project_name, timestamp\n| summarize [\"Secret count\"]=count() by repo_name\n| sort by [\"Secret count\"] desc\n| render piechart",
+              "size": 0,
+              "title": "Secrets finding during the latest scan",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [
+                "{applicationInsights}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "repo_url",
+                    "formatter": 7,
+                    "formatOptions": {
+                      "linkTarget": "Url"
+                    }
+                  },
+                  {
+                    "columnMatch": "Repository",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "resource",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Status",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Healthy",
+                          "representation": "success",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Unhealthy",
+                          "representation": "2",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "NotApplicable",
+                          "representation": "1",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "success",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Severity",
+                    "formatter": 1
+                  },
+                  {
+                    "columnMatch": "Secret",
+                    "formatter": 1
+                  },
+                  {
+                    "columnMatch": "properties",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "Details",
+                    "formatter": 11,
+                    "formatOptions": {
+                      "linkTarget": "GenericDetails",
+                      "linkIsContextBlade": true
+                    }
+                  }
+                ],
+                "filter": true
+              }
+            },
+            "customWidth": "50",
+            "name": "Summary"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let startDateTime = {timeRange:start};\nlet endDateTime = {timeRange:end};\nlet trendBinSize = {trendBinSize};\ncustomEvents\n| where timestamp between(startDateTime .. endDateTime)\n| where name == \"telemetry_azure_devops_secrets_counter\"\n| extend\n    operation_id = tostring(customDimensions.['operation_id']),\n    organization_uri = tostring(customDimensions.['organization_uri']),\n    project_name = tostring(customDimensions.['project_name']),\n    repo_name = tostring(customDimensions.['repo_name']),\n    repo_url = tostring(customDimensions.['repo_url']),\n    git_branch = tostring(customDimensions.['git_branch']),\n    description = tostring(customDimensions.['description']),\n    start_line = tostring(customDimensions.['start_line']),\n    file_path = tostring(customDimensions.['file_path']),\n    rule_id = tostring(customDimensions.['rule_id']),\n    ref_commit_id = tostring(customDimensions.['ref_commit_id']),\n    latest_ref_committer_date = todatetime(customDimensions.['latest_ref_committer_date']),\n    latest_ref_committer_name = tostring(customDimensions.['latest_ref_committer_name']),\n    latest_ref_committer_email = tostring(customDimensions.['latest_ref_committer_email'])\n| where operation_id <> \"\"\n| where repo_name in ({repo})\n| where description in ({secretDescription})\n| project repo_name, branch=git_branch, latest_ref_committer_date, latest_ref_committer_name, latest_ref_committer_email, repo_url, operation_id, [\"Application Insights\"]=appName, project_name, timestamp\n| summarize count() by bin(timestamp, trendBinSize), operation_id\n| render barchart",
+              "size": 0,
+              "title": "Trend - Secrets finding count per scan",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [
+                "{applicationInsights}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "repo_url",
+                    "formatter": 7,
+                    "formatOptions": {
+                      "linkTarget": "Url"
+                    }
+                  },
+                  {
+                    "columnMatch": "Repository",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "resource",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Status",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Healthy",
+                          "representation": "success",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Unhealthy",
+                          "representation": "2",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "NotApplicable",
+                          "representation": "1",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "success",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Severity",
+                    "formatter": 1
+                  },
+                  {
+                    "columnMatch": "Secret",
+                    "formatter": 1
+                  },
+                  {
+                    "columnMatch": "properties",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "Details",
+                    "formatter": 11,
+                    "formatOptions": {
+                      "linkTarget": "GenericDetails",
+                      "linkIsContextBlade": true
+                    }
+                  }
+                ],
+                "filter": true
+              }
+            },
+            "customWidth": "50",
+            "name": "Trend"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let startDateTime = {timeRange:start};\nlet endDateTime = {timeRange:end};\nlet trendBinSize = {trendBinSize};\ncustomEvents\n| where timestamp between(startDateTime .. endDateTime)\n| where name == \"telemetry_azure_devops_secrets_counter\"\n| extend\n    operation_id = tostring(customDimensions.['operation_id']),\n    organization_uri = tostring(customDimensions.['organization_uri']),\n    project_name = tostring(customDimensions.['project_name']),\n    repo_name = tostring(customDimensions.['repo_name']),\n    repo_url = tostring(customDimensions.['repo_url']),\n    git_branch = tostring(customDimensions.['git_branch']),\n    description = tostring(customDimensions.['description']),\n    start_line = tostring(customDimensions.['start_line']),\n    file_path = tostring(customDimensions.['file_path']),\n    rule_id = tostring(customDimensions.['rule_id']),\n    ref_commit_id = tostring(customDimensions.['ref_commit_id']),\n    latest_ref_committer_date = todatetime(customDimensions.['latest_ref_committer_date']),\n    latest_ref_committer_name = tostring(customDimensions.['latest_ref_committer_name']),\n    latest_ref_committer_email = tostring(customDimensions.['latest_ref_committer_email'])\n| where operation_id == \"{latestOperationIdForSecretsScan}\"\n| where repo_name in ({repo})\n| where description in ({secretDescription})\n| project repo_name, branch=git_branch, latest_ref_committer_date, latest_ref_committer_name, latest_ref_committer_email, repo_url, operation_id, [\"Application Insights\"]=appName, project_name, timestamp, description\n| summarize [\"Secret count\"]=count() by description\n| render piechart",
+              "size": 0,
+              "title": "Secrets finding per description during the latest scan",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [
+                "{applicationInsights}"
+              ]
+            },
+            "customWidth": "50",
+            "name": "Summary - Per description"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let startDateTime = {timeRange:start};\nlet endDateTime = {timeRange:end};\nlet trendBinSize = {trendBinSize};\ncustomEvents\n| where timestamp between(startDateTime .. endDateTime)\n| where name == \"telemetry_azure_devops_secrets_counter\"\n| extend\n    operation_id = tostring(customDimensions.['operation_id']),\n    organization_uri = tostring(customDimensions.['organization_uri']),\n    project_name = tostring(customDimensions.['project_name']),\n    repo_name = tostring(customDimensions.['repo_name']),\n    repo_url = tostring(customDimensions.['repo_url']),\n    git_branch = tostring(customDimensions.['git_branch']),\n    description = tostring(customDimensions.['description']),\n    start_line = tostring(customDimensions.['start_line']),\n    file_path = tostring(customDimensions.['file_path']),\n    rule_id = tostring(customDimensions.['rule_id']),\n    ref_commit_id = tostring(customDimensions.['ref_commit_id']),\n    latest_ref_committer_date = todatetime(customDimensions.['latest_ref_committer_date']),\n    latest_ref_committer_name = tostring(customDimensions.['latest_ref_committer_name']),\n    latest_ref_committer_email = tostring(customDimensions.['latest_ref_committer_email'])\n| where operation_id == \"{latestOperationIdForSecretsScan}\"\n| where repo_name in ({repo})\n| where description in ({secretDescription})\n| project repo_name, branch=git_branch, latest_ref_committer_date, latest_ref_committer_name, latest_ref_committer_email, repo_url, operation_id, [\"Application Insights\"]=appName, project_name, timestamp\n| summarize [\"Secret count\"]=count() by repo_name, branch, latest_ref_committer_name\n| sort by [\"Secret count\"] desc",
+              "size": 0,
+              "title": "Secrets finding per repos during the latest scan",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [
+                "{applicationInsights}"
+              ]
+            },
+            "customWidth": "50",
+            "name": "Summary - Per repos"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let startDateTime = {timeRange:start};\nlet endDateTime = {timeRange:end};\nlet trendBinSize = {trendBinSize};\ncustomEvents\n| where timestamp between(startDateTime .. endDateTime)\n| where name == \"telemetry_azure_devops_secrets_counter\"\n| extend\n    operation_id = tostring(customDimensions.['operation_id']),\n    organization_uri = tostring(customDimensions.['organization_uri']),\n    project_name = tostring(customDimensions.['project_name']),\n    repo_name = tostring(customDimensions.['repo_name']),\n    repo_url = tostring(customDimensions.['repo_url']),\n    git_branch = tostring(customDimensions.['git_branch']),\n    description = tostring(customDimensions.['description']),\n    start_line = tostring(customDimensions.['start_line']),\n    file_path = tostring(customDimensions.['file_path']),\n    rule_id = tostring(customDimensions.['rule_id']),\n    fingerprint = tostring(customDimensions.['fingerprint']),\n    ref_commit_id = tostring(customDimensions.['ref_commit_id']),\n    latest_ref_committer_date = todatetime(customDimensions.['latest_ref_committer_date']),\n    latest_ref_committer_name = tostring(customDimensions.['latest_ref_committer_name']),\n    latest_ref_committer_email = tostring(customDimensions.['latest_ref_committer_email'])\n| where operation_id == \"{latestOperationIdForSecretsScan}\"\n| where repo_name in ({repo})\n| where description in ({secretDescription})\n| project repo_name, branch=git_branch, latest_ref_committer_date, latest_ref_committer_name, description, file_path, start_line, fingerprint, repo_url, operation_id, [\"Application Insights\"]=appName, project_name, timestamp",
+              "size": 2,
+              "showAnalytics": true,
+              "title": "All secrets finding",
+              "showExportToExcel": true,
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [
+                "{applicationInsights}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "repo_url",
+                    "formatter": 7,
+                    "formatOptions": {
+                      "linkTarget": "Url"
+                    }
+                  },
+                  {
+                    "columnMatch": "Repository",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "resource",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Status",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Healthy",
+                          "representation": "success",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Unhealthy",
+                          "representation": "2",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "NotApplicable",
+                          "representation": "1",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "success",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Severity",
+                    "formatter": 1
+                  },
+                  {
+                    "columnMatch": "Secret",
+                    "formatter": 1
+                  },
+                  {
+                    "columnMatch": "properties",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "Details",
+                    "formatter": 11,
+                    "formatOptions": {
+                      "linkTarget": "GenericDetails",
+                      "linkIsContextBlade": true
+                    }
+                  }
+                ],
+                "filter": true
+              }
+            },
+            "name": "Inventory"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "SelectedTab",
+        "comparison": "isEqualTo",
+        "value": "SecretsTab"
+      },
+      "name": "group - SecretsTab"
+    }
+  ],
+  "fallbackResourceIds": [
+    "azure monitor"
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

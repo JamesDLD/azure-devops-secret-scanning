@@ -1,0 +1,65 @@
+#-------------------------------------------------------------------------
+# Description: This script scans all repositories of an Azure DevOps project and sends its findings in an Azure Application Insights.
+# Prerequisite:
+#   - Disable the option "Protect access to repositories in YAML pipelines" to allow the Azure DevOps Build Service to pull remote repositories. You can find this option by navigating to the project settings page under "Pipeline" > "Settings".
+#   - Grant version control permissions to the build service, cf https://learn.microsoft.com/en-us/azure/devops/pipelines/scripts/git-commands?view=azure-devops&tabs=yaml&WT.mc_id=DOP-MVP-5003548#grant-version-control-permissions-to-the-build-service
+#--------------------------------------------------------------------------
+
+trigger: none
+
+parameters:
+  - name: application_insights_connection_string
+    type: string
+  - name: event_name
+    type: string
+    default: "telemetry_azure_devops_secrets_counter"
+  - name: git_user_email
+    type: string
+    default: "your_security_team@company.com"
+  - name: git_user_name
+    type: string
+    default: "your_security_team"
+
+variables:
+  - name: organization_uri
+    value: $[variables['System.CollectionUri']] #Azure DevOps System variable, cf https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml&WT.mc_id=DOP-MVP-5003548#system-variables-devops-services
+  - name: project_name
+    value: $[variables['System.TeamProject']]
+
+stages:
+  - stage: secret_scanning
+    displayName: Secret scanning with Gitleaks
+
+    jobs:
+      - job: Scan
+        pool:
+          vmImage: 'ubuntu-latest'
+
+        steps:
+          - checkout: self
+            clean: true
+            persistCredentials: true
+
+          - task: Bash@3
+            displayName: 'Install Gitleaks'
+            inputs:
+              targetType: "inline"
+              script: |
+                git clone https://github.com/gitleaks/gitleaks.git
+                cd gitleaks
+                make build
+
+          - task: Bash@3
+            displayName: 'Git clone and scan'
+            inputs:
+              filePath: './scan_azure_devops_secret.sh'
+              targetType: 'filePath'
+              arguments: >
+                -o '$(organization_uri)'
+                -p '$(project_name)'
+                -c '${{ parameters.application_insights_connection_string }}'
+                -n '${{ parameters.event_name }}'
+            env:
+              AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+              GIT_USER_EMAIL: ${{ parameters.git_user_email }}
+              GIT_USER_NAME: ${{ parameters.git_user_name }}
