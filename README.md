@@ -1,6 +1,6 @@
 # Introduction
 
-In this article we will see how to scan all repos of an Azure DevOps project.
+In [this article](https://techcommunity.microsoft.com/t5/azure-developer-community-blog/monitor-git-secrets-on-azure-devops-with-gitleaks/ba-p/3998673?WT.mc_id=DOP-MVP-5003548) we will see how to scan all repos of an Azure DevOps project.
 
 The secret scanning solution will respect the following guidelines:
 
