@@ -57,7 +57,7 @@ fi
 
 # Action
 ## List Azure DevOps repos
-repos=$(az repos list --organization "$organization_uri" --project "$project_name" | jq -r '.[] | @base64')
+repos=$(az repos list --organization "$organization_uri" --project "$project_name" --query "[?isDisabled == \`false\`]" | jq -r '.[] | @base64')
 
 for repo in $repos; do
   _jqrepo() {
