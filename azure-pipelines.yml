@@ -32,6 +32,8 @@ stages:
 
     jobs:
       - job: Scan
+        timeoutInMinutes: 0
+
         pool:
           vmImage: 'ubuntu-latest'
 
