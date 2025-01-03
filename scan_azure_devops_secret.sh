@@ -51,6 +51,8 @@ if [ ! -z "$GIT_USER_NAME" ] || [ ! -z "$GIT_USER_NAME" ]; then
   echo "Enable scripts to run Git commands for user.email $GIT_USER_EMAIL and user.name $GIT_USER_NAME"
   git config --global user.email "$GIT_USER_EMAIL"
   git config --global user.name "$GIT_USER_NAME"
+  echo "Disable support for symbolic links"
+  git config --global core.symlinks false
 else
   echo "Git user.email and user.name will use the current setting"
 fi
